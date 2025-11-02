@@ -12,11 +12,11 @@ class PrintJob(BaseModel):
     copies: int = 1
 
 @app.get("/")
-async def root():
+async def test_connection():
     return {"message": "Hello World"}
 
 @app.get("/print-list/")
-async def handle_print_webhook():
+async def check_printer_list():
     try: 
         response = subprocess.check_output("lpstat -p | awk '{print $2}'", shell=True) 
         return {"message": f"Printer List: {response}"}
