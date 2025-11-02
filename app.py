@@ -15,7 +15,7 @@ class PrintJob(BaseModel):
 async def root():
     return {"message": "Hello World"}
 
-@app.post("/print-list/")
+@app.get("/print-list/")
 async def handle_print_webhook():
     try: 
         response = subprocess.check_output("lpstat -p | awk '{print $2}'", shell=True) 
@@ -39,7 +39,7 @@ async def handle_print_webhook(job: PrintJob):
             command = ['/usr/bin/lp', '-d', job.printer_name, job.file_path]
         try:
             subprocess.run(command, check=True)
-            return {"message": "Print job submitted successfully", "job_details": job.dict()}
+            return {"message": "Print job submitted successfully"}
         except subprocess.CalledProcessError as e:
             raise HTTPException(status_code=500, detail=f"Print command failed: {e}")
     except Exception as e:
