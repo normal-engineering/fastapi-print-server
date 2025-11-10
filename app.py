@@ -5,13 +5,14 @@ import cups
 import tempfile
 
 from pydantic import BaseModel
+from typing import Any
 import subprocess
 import os
 
 app = FastAPI()
 
 class PrintJob(BaseModel):
-    file_path: str
+    file: UploadFile = None
     printer_name: str = "default_printer"
     copies: int = 1
 
@@ -25,33 +26,32 @@ async def check_printer_list():
         response = subprocess.check_output("lpstat -p | awk '{print $2}'", shell=True) 
         return {"message": f"Printer List: {response}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error submitting print job: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving printer list: {str(e)}")
 
 @app.post("/print-webhook/")
-async def handle_print_webhook(file: UploadFile | None = None, job: PrintJob):
+async def handle_print_webhook(job: PrintJob | None = None):
 
-    if file is None:
+    if job.file is None:
         raise HTTPException(status_code=400, detail="No file uploaded")
 
-    if not file.filename.lower().endswith(".pdf"):
+    if not job.file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
     # Save the uploaded PDF to a temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        tmp.write(await file.read())
+        tmp.write(await job.copyfile.read())
         tmp_path = tmp.name
         
     # Integrate with a printing library or system command
     try:
-
         # Connect to CUPS
         conn = cups.Connection()
     
 
         # Check if the printer exists
         printers = conn.getPrinters()
-        if PrintJob.printer_name not in printers:
-            raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
+        if job.printer_name not in printers:
+            raise HTTPException(status_code=404, detail=f"Printer '{job.printer_name}' not found")
 
         # Example using a system command (Windows: print, Linux: lp)
         # This would need to be adapted based on your OS and printer setup
@@ -67,11 +67,11 @@ async def handle_print_webhook(file: UploadFile | None = None, job: PrintJob):
     # except Exception as e:
     #     raise HTTPException(status_code=500, detail=f"Error submitting print job: {str(e)}")
     
-        job_id = conn.printFile(PrintJob.printer_name, tmp_path, file.filename, {})
+        job_id = conn.printFile(PrintJob.printer_name, tmp_path, job.file.filename, {})
 
         return JSONResponse({
             "status": "success",
-            "message": f"Print job {job_id} sent to printer '{printer_name}'."
+            "message": f"Print job {job_id} sent to printer '{job.printer_name}'."
         })
 
     except cups.IPPError as e:
