@@ -1,4 +1,9 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+
+import cups 
+import tempfile
+
 from pydantic import BaseModel
 import subprocess
 import os
@@ -44,3 +49,48 @@ async def handle_print_webhook(job: PrintJob):
             raise HTTPException(status_code=500, detail=f"Print command failed: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error submitting print job: {str(e)}")
+    
+@app.post("/print")
+async def print_pdf(
+    file: UploadFile | None = None,
+    printer_name: str = Form(...),
+):
+    """
+    Upload a PDF file and send it to the local CUPS printer.
+    """
+    if file is None:
+        raise HTTPException(status_code=400, detail="No file uploaded")
+
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+
+    # Save the uploaded PDF to a temp file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    try:
+        # Connect to CUPS
+        conn = cups.Connection()
+
+        # Check if the printer exists
+        printers = conn.getPrinters()
+        if printer_name not in printers:
+            raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
+
+        # Send the job to the printer
+        job_id = conn.printFile(printer_name, tmp_path, file.filename, {})
+
+        return JSONResponse({
+            "status": "success",
+            "message": f"Print job {job_id} sent to printer '{printer_name}'."
+        })
+
+    except cups.IPPError as e:
+        raise HTTPException(status_code=500, detail=f"CUPS error: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {e}")
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
