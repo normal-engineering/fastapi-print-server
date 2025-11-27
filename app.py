@@ -53,7 +53,7 @@ async def print_pdf(file: UploadFile = File(...)):
         if not printers:
             raise HTTPException(status_code=500, detail="No printers found in CUPS")
 
-        default_printer = list(printers.keys())[0]
+        default_printer = list(printers.keys())[2]
 
         # Print PDF
         print_job_id = conn.printFile(default_printer, temp_filename, "FastAPI Print Job", {})
