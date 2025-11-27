@@ -53,7 +53,8 @@ async def print_pdf(file: UploadFile = File(...)):
         if not printers:
             raise HTTPException(status_code=500, detail="No printers found in CUPS")
 
-        default_printer = list(printers.keys())[2]
+        # default_printer = list(printers.keys())[2]
+        default_printer = 'HP_LaserJet_Pro_M501dn'
 
         # Print PDF
         print_job_id = conn.printFile(default_printer, temp_filename, "FastAPI Print Job", {})
