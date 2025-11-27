@@ -169,41 +169,41 @@ async def print_pdf(file: UploadFile = File(...)):
 #         if os.path.exists(tmp_path):
 #             os.remove(tmp_path)
 
-@app.post('print')
-async def send_to_printer(printer_name):
-    url = 'https://coconut.sgp1.digitaloceanspaces.com/samples/full_qr.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=DO00QQHCNUBAT68NAW7M%2F20251110%2Fsgp1%2Fs3%2Faws4_request&X-Amz-Date=20251110T091909Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=500d5261db1995d196b04359ce157b261963acc6d939a64198b2fb392067f1c6'
+# @app.post('print')
+# async def send_to_printer(printer_name):
+#     url = 'https://coconut.sgp1.digitaloceanspaces.com/samples/full_qr.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=DO00QQHCNUBAT68NAW7M%2F20251110%2Fsgp1%2Fs3%2Faws4_request&X-Amz-Date=20251110T091909Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=500d5261db1995d196b04359ce157b261963acc6d939a64198b2fb392067f1c6'
     
-    payload = {}
-    headers = {}
+#     payload = {}
+#     headers = {}
 
-    response = requests.request("GET", url, headers=headers, data=payload)
+#     response = requests.request("GET", url, headers=headers, data=payload)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        tmp.write(await response.read())
-        tmp_path = tmp.name
+#     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+#         tmp.write(await response.read())
+#         tmp_path = tmp.name
 
-    try:
-        # Connect to CUPS
-        conn = cups.Connection()
+#     try:
+#         # Connect to CUPS
+#         conn = cups.Connection()
 
-        # Check if the printer exists
-        printers = conn.getPrinters()
-        if printer_name not in printers:
-            raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
+#         # Check if the printer exists
+#         printers = conn.getPrinters()
+#         if printer_name not in printers:
+#             raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
 
-        # Send the job to the printer
-        job_id = conn.printFile(printer_name, tmp_path, {})
+#         # Send the job to the printer
+#         job_id = conn.printFile(printer_name, tmp_path, {})
 
-        return JSONResponse({
-            "status": "success",
-            "message": f"Print job {job_id} sent to printer '{printer_name}'."
-        })
+#         return JSONResponse({
+#             "status": "success",
+#             "message": f"Print job {job_id} sent to printer '{printer_name}'."
+#         })
     
-    except cups.IPPError as e:
-        raise HTTPException(status_code=500, detail=f"CUPS error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {e}")
-    finally:
-        # Clean up the temporary file
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+#     except cups.IPPError as e:
+#         raise HTTPException(status_code=500, detail=f"CUPS error: {e}")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error: {e}")
+#     finally:
+#         # Clean up the temporary file
+#         if os.path.exists(tmp_path):
+#             os.remove(tmp_path)
