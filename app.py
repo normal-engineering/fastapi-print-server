@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 
 import cups 
 import tempfile
@@ -9,6 +9,8 @@ from typing import Any
 import subprocess
 import os
 import requests
+
+import uuid
 
 app = FastAPI()
 
@@ -28,6 +30,47 @@ async def check_printer_list():
         return {"message": f"Printer List: {response}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving printer list: {str(e)}")
+
+@app.post("/print-pdf/")
+async def print_pdf(file: UploadFile = File(...)):
+    # Validate file type
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    # Save to temp directory
+    temp_filename = f"/tmp/{uuid.uuid4()}.pdf"
+
+    try:
+        # Write uploaded.pdf → /tmp/uuid.pdf
+        with open(temp_filename, "wb") as f:
+            f.write(await file.read())
+
+        # Connect to CUPS
+        conn = cups.Connection()
+
+        # Choose default printer
+        printers = conn.getPrinters()
+        if not printers:
+            raise HTTPException(status_code=500, detail="No printers found in CUPS")
+
+        default_printer = list(printers.keys())[0]
+
+        # Print PDF
+        print_job_id = conn.printFile(default_printer, temp_filename, "FastAPI Print Job", {})
+
+        return {
+            "status": "queued",
+            "printer": default_printer,
+            "cups_job_id": print_job_id,
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Print failed: {str(e)}")
+
+    finally:
+        # Cleanup
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
 
 # @app.post("/print-webhook/")
 # async def handle_print_webhook(job: PrintJob | None = None):
