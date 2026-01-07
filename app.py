@@ -57,7 +57,7 @@ async def check_printer_list():
         raise HTTPException(status_code=500, detail=f"Error retrieving printer list: {str(e)}")
 
 @app.post("/print-pdf/")
-async def print_pdf(file: UploadFile = File(...), printer: str = 'HP_LaserJet_Pro_M501dn'):
+async def print_pdf(file: UploadFile = File(...), printer: str= None):
     # Validate file type
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
