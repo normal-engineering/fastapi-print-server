@@ -19,6 +19,31 @@ class PrintJob(BaseModel):
     printer_name: str = "default_printer"
     copies: int = 1
 
+def print_file_with_cups(file_path: str, printer_name: str = None):
+    """Sends a file to a CUPS printer."""
+    try:
+        conn = cups.Connection()
+        printers = conn.getPrinters()
+
+        if not printers:
+            raise HTTPException(status_code=503, detail="No printers found in CUPS")
+
+        # Use a default printer if none is specified, or validate the specified one
+        if printer_name is None:
+            printer_name = list(printers.keys())[0] # Use the first available printer
+        elif printer_name not in printers:
+            raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
+
+        # The printFile method handles various file formats (text, PDF, images, etc.)
+        job_id = conn.printFile(printer_name, file_path, f"FastAPI Job: {os.path.basename(file_path)}", {})
+        return {"message": "Print job submitted successfully", "job_id": job_id, "printer": printer_name}
+
+    except cups.IPPError as e:
+        raise HTTPException(status_code=500, detail=f"CUPS IPPError: {e.message}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+
 @app.get("/")
 async def test_connection():
     return {"message": "Hello World"}
@@ -32,39 +57,20 @@ async def check_printer_list():
         raise HTTPException(status_code=500, detail=f"Error retrieving printer list: {str(e)}")
 
 @app.post("/print-pdf/")
-async def print_pdf(file: UploadFile = File(...), printer='HP_LaserJet_Pro_M501dn'):
+async def print_pdf(file: UploadFile = File(...), printer: str = 'HP_LaserJet_Pro_M501dn'):
     # Validate file type
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
     # Save to temp directory
     temp_filename = f"/tmp/{uuid.uuid4()}.pdf"
-
+    # Write uploaded.pdf → /tmp/uuid.pdf
+    with open(temp_filename, "wb") as f:
+        f.write(await file.read())
+    
     try:
-        # Write uploaded.pdf → /tmp/uuid.pdf
-        with open(temp_filename, "wb") as f:
-            f.write(await file.read())
-
-        # Connect to CUPS
-        conn = cups.Connection()
-
-        # Choose default printer
-        printers = conn.getPrinters()
-        if not printers:
-            raise HTTPException(status_code=500, detail="No printers found in CUPS")
-
-        # printer = list(printers.keys())[2]
-        # default_printer = 'HP_LaserJet_Pro_M501dn'
-        # default_printer = 'Brother_HL_L2460DW'
-
-        # Print PDF
-        print_job_id = conn.printFile(printer, temp_filename, "FastAPI Print Job", {})
-
-        return {
-            "status": "queued",
-            "printer": printer,
-            "cups_job_id": print_job_id,
-        }
+        result = print_file_with_cups(temp_filename, printer)
+        return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Print failed: {str(e)}")
@@ -73,139 +79,3 @@ async def print_pdf(file: UploadFile = File(...), printer='HP_LaserJet_Pro_M501d
         # Cleanup
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
-
-# @app.post("/print-webhook/")
-# async def handle_print_webhook(job: PrintJob | None = None):
-
-#     if job.file is None:
-#         raise HTTPException(status_code=400, detail="No file uploaded")
-
-#     if not job.file.filename.lower().endswith(".pdf"):
-#         raise HTTPException(status_code=400, detail="Only PDF files are supported")
-
-#     # Save the uploaded PDF to a temp file
-#     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-#         tmp.write(await job.copyfile.read())
-#         tmp_path = tmp.name
-        
-#     # Integrate with a printing library or system command
-#     try:
-#         # Connect to CUPS
-#         conn = cups.Connection()
-    
-
-#         # Check if the printer exists
-#         printers = conn.getPrinters()
-#         if job.printer_name not in printers:
-#             raise HTTPException(status_code=404, detail=f"Printer '{job.printer_name}' not found")
-
-#         # Example using a system command (Windows: print, Linux: lp)
-#         # This would need to be adapted based on your OS and printer setup
-#     #     if os.name == 'nt':  # Windows
-#     #         command = f'print /d:"{job.printer_name}" "{job.file_path}"'
-#     #     else:  # Linux/macOS
-#     #         command = ['/usr/bin/lp', '-d', job.printer_name, job.file_path]
-#     #     try:
-#     #         subprocess.run(command, check=True)
-#     #         return {"message": "Print job submitted successfully"}
-#     #     except subprocess.CalledProcessError as e:
-#     #         raise HTTPException(status_code=500, detail=f"Print command failed: {e}")
-#     # except Exception as e:
-#     #     raise HTTPException(status_code=500, detail=f"Error submitting print job: {str(e)}")
-    
-#         job_id = conn.printFile(PrintJob.printer_name, tmp_path, job.file.filename, {})
-
-#         return JSONResponse({
-#             "status": "success",
-#             "message": f"Print job {job_id} sent to printer '{job.printer_name}'."
-#         })
-
-#     except cups.IPPError as e:
-#         raise HTTPException(status_code=500, detail=f"CUPS error: {e}")
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error: {e}")
-#     finally:
-#         # Clean up the temporary file
-#         if os.path.exists(tmp_path):
-#             os.remove(tmp_path)
-
-# @app.post("/print")
-# async def print_pdf(file: UploadFile, printer_name):
-#     """
-#     Upload a PDF file and send it to the local CUPS printer.
-#     """
-#     if file is None:
-#         raise HTTPException(status_code=400, detail="No file uploaded")
-
-#     if not file.filename.lower().endswith(".pdf"):
-#         raise HTTPException(status_code=400, detail="Only PDF files are supported")
-
-#     # Save the uploaded PDF to a temp file
-#     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-#         tmp.write(await file.read())
-#         tmp_path = tmp.name
-
-#     try:
-#         # Connect to CUPS
-#         conn = cups.Connection()
-
-#         # Check if the printer exists
-#         printers = conn.getPrinters()
-#         if printer_name not in printers:
-#             raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
-
-#         # Send the job to the printer
-#         job_id = conn.printFile(printer_name, tmp_path, file.filename, {})
-
-#         return JSONResponse({
-#             "status": "success",
-#             "message": f"Print job {job_id} sent to printer '{printer_name}'."
-#         })
-
-#     except cups.IPPError as e:
-#         raise HTTPException(status_code=500, detail=f"CUPS error: {e}")
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error: {e}")
-#     finally:
-#         # Clean up the temporary file
-#         if os.path.exists(tmp_path):
-#             os.remove(tmp_path)
-
-# @app.post('print')
-# async def send_to_printer(printer_name):
-#     url = 'https://coconut.sgp1.digitaloceanspaces.com/samples/full_qr.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=DO00QQHCNUBAT68NAW7M%2F20251110%2Fsgp1%2Fs3%2Faws4_request&X-Amz-Date=20251110T091909Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=500d5261db1995d196b04359ce157b261963acc6d939a64198b2fb392067f1c6'
-    
-#     payload = {}
-#     headers = {}
-
-#     response = requests.request("GET", url, headers=headers, data=payload)
-
-#     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-#         tmp.write(await response.read())
-#         tmp_path = tmp.name
-
-#     try:
-#         # Connect to CUPS
-#         conn = cups.Connection()
-
-#         # Check if the printer exists
-#         printers = conn.getPrinters()
-#         if printer_name not in printers:
-#             raise HTTPException(status_code=404, detail=f"Printer '{printer_name}' not found")
-
-#         # Send the job to the printer
-#         job_id = conn.printFile(printer_name, tmp_path, {})
-
-#         return JSONResponse({
-#             "status": "success",
-#             "message": f"Print job {job_id} sent to printer '{printer_name}'."
-#         })
-    
-#     except cups.IPPError as e:
-#         raise HTTPException(status_code=500, detail=f"CUPS error: {e}")
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error: {e}")
-#     finally:
-#         # Clean up the temporary file
-#         if os.path.exists(tmp_path):
-#             os.remove(tmp_path)
