@@ -32,7 +32,7 @@ async def check_printer_list():
         raise HTTPException(status_code=500, detail=f"Error retrieving printer list: {str(e)}")
 
 @app.post("/print-pdf/")
-async def print_pdf(file: UploadFile = File(...)):
+async def print_pdf(file: UploadFile = File(...), printer='HP_LaserJet_Pro_M501dn'):
     # Validate file type
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
@@ -54,14 +54,14 @@ async def print_pdf(file: UploadFile = File(...)):
             raise HTTPException(status_code=500, detail="No printers found in CUPS")
 
         # default_printer = list(printers.keys())[2]
-        default_printer = 'HP_LaserJet_Pro_M501dn'
+        # default_printer = 'HP_LaserJet_Pro_M501dn'
 
         # Print PDF
-        print_job_id = conn.printFile(default_printer, temp_filename, "FastAPI Print Job", {})
+        print_job_id = conn.printFile(printer, temp_filename, "FastAPI Print Job", {})
 
         return {
             "status": "queued",
-            "printer": default_printer,
+            "printer": printer,
             "cups_job_id": print_job_id,
         }
 
