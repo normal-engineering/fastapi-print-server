@@ -159,7 +159,7 @@ async def download_pdf_from_bucket(s3_object_key, local_file_path, client=client
         if file_exists_spaces(s3_object_key):
             # Download the file
             client.download_file(SPACE_NAME, s3_object_key, local_file_path)
-            print(f"✅ Successfully downloaded '{s3_object_key}' to '{local_file_path}'")
+        print(f"✅ Successfully downloaded '{s3_object_key}' to '{local_file_path}'")
 
     except Exception as e:
         print(f"❌ Error downloading file: {e}")
