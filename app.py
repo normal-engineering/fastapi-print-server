@@ -1,23 +1,39 @@
-from fastapi import FastAPI, UploadFile, HTTPException, File, Form
+from fastapi import FastAPI, UploadFile, HTTPException, File, Form, Request
 from fastapi.responses import JSONResponse, FileResponse
 
 import cups 
 import tempfile
 
-from pydantic import BaseModel
-from typing import Any
+from pydantic import TypeAdapter
+from typing import Any, TypedDict
 import subprocess
 import os
-import requests
+
+from datetime import datetime
 
 import uuid
 
+from db.bucket import download_pdf_from_bucket
+
 app = FastAPI()
 
-class PrintJob(BaseModel):
-    file: UploadFile = None
-    printer_name: str = "default_printer"
-    copies: int = 1
+# class PrintJob(BaseModel):
+#     file: UploadFile = None
+#     printer_name: str = "default_printer"
+#     copies: int = 1
+
+type_dict = {
+    'batch' : '明細表',
+    'packing' : '理貨單',
+    'label' : '宅配貼紙'
+}
+
+class PrintJob(TypedDict):
+    sub: str
+    type: str
+    date_delivery: datetime
+    device_id: str
+    printer_name: str
 
 def print_file_with_cups(file_path: str, printer_name: str = None):
     """Sends a file to a CUPS printer."""
@@ -46,7 +62,7 @@ def print_file_with_cups(file_path: str, printer_name: str = None):
 
 @app.get("/")
 async def test_connection():
-    return {"message": "Hello World"}
+    return {"message": "Print Server Online"}
 
 @app.get("/print-list/")
 async def check_printer_list():
@@ -72,6 +88,34 @@ async def print_pdf(
     
     try:
         result = print_file_with_cups(temp_filename, printer)
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Print failed: {str(e)}")
+
+    finally:
+        # Cleanup
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
+
+@app.post("/print-bucket/")
+async def print_pdf(request:Request):
+    body = await request.body()
+    print(body)
+    ta_req = TypeAdapter(PrintJob)
+    req = ta_req.validate_json(body)
+    # Save to temp directory
+
+    date = req['date_delivery'].strftime('%Y-%m')
+    # date = '2026-01'
+    type_converted = type_dict[req['type']]
+    print(type_converted)
+    temp_filename = f"{uuid.uuid4()}.pdf"
+    bucket_filename = f"{date}/{type_converted}/{req['sub']}_{type_converted}.pdf"
+    await download_pdf_from_bucket(s3_object_key=bucket_filename, local_file_path=temp_filename)
+    
+    try:
+        result = print_file_with_cups(temp_filename, req['printer'])
         return result
 
     except Exception as e:
