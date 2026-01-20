@@ -116,7 +116,7 @@ async def print_pdf(
             os.remove(temp_filename)
 
 @app.post("/print-bucket/")
-async def print_pdf(request:Request):
+async def print_pdf_from_bucket(request:Request):
     body = await request.body()
     print(body)
     ta_req = TypeAdapter(PrintJob)
