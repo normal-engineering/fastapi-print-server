@@ -130,10 +130,12 @@ async def print_pdf_from_bucket(request:Request):
     temp_filename = f"{uuid.uuid4()}.pdf"
     bucket_filename = f"{date}/{type_converted}/{req['sub']}_{type_converted}.pdf"
     await download_pdf_from_bucket(s3_object_key=bucket_filename, local_file_path=temp_filename)
-    
+
     try:
-        result = print_file_with_cups(temp_filename, req['printer'])
-        return result
+        with open(temp_filename, 'rb') as file:
+            file.read()
+            result = print_file_with_cups(file, req['printer'])
+            return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Print failed: {str(e)}")
