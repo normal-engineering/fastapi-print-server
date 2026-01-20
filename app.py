@@ -50,7 +50,7 @@ class PrintJob(TypedDict):
     type: str
     date_delivery: datetime
     device_id: str
-    printer_name: str
+    printer: str
 
 def print_file_with_cups(file_path: str, printer_name: str = None):
     """Sends a file to a CUPS printer."""
