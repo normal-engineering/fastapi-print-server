@@ -28,6 +28,23 @@ type_dict = {
     'label' : '宅配貼紙'
 }
 
+printer_dict = {
+    "router" : "FUJIFILM_Apeos_C5570_66_23_85",
+    "1" : "Brother_HL_L2460DW",
+    "2" : "Brother_HL_L2460DW_94ddf88e25fb",
+    "3" : "Brother_HL_L2460DW_94ddf88e24e7",
+    "4" : "Brother_HL_L2460DW_94ddf88e25e9",
+    "5" : "Brother_HL_L2460DW_94ddf88e35fa"
+}
+
+phone_id = { 
+    "red-1":"98BA3739-B0B8-4BE3-956F-CDA1240CA5A7",
+    "purple-2": "17C41332-312D-4C65-AB6D-DF0061DF2709",
+    "green-3": "C57DFDB5-2130-4C30-9A60-44D871D2D49B",
+    "black-4": "9C8DB7C8-19A9-46FE-8B1A-D0A67F795AE2", 
+    "white-5": "3443422A-FD19-412C-AC18-0B1ADD40292B",
+    }
+
 class PrintJob(TypedDict):
     sub: str
     type: str
