@@ -1,6 +1,5 @@
 from ctypes import alignment
 from turtle import left
-import barcode
 from reportlab.lib import styles
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
