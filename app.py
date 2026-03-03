@@ -12,6 +12,7 @@ import os
 from datetime import datetime
 
 import uuid
+from renders.reportlab.reportlab_label import create_shipping_label_code39
 
 from db.bucket import download_pdf_from_bucket
 
@@ -80,6 +81,33 @@ def print_file_with_cups(file_path: str, printer_name: str = None):
 @app.get("/")
 async def test_connection():
     return {"message": "Print Server Online"}
+
+@app.get("/test-print")
+async def test_reportlab():
+    sample_data = {
+        'obtnumber': '907572734046',  # Code39 compatible value
+        'date_shipping': '2026-02-01',
+        'date_delivery': '2026-02-03',
+        'time_delivery_start': '14:00',
+        'time_delivery_end': '16:00',
+        'postnumber': '83-820-02-B',  # Code39 compatible value
+        'sub': 'O25003669002',
+        'customer': '林安琪(黃鼎喻/王奕雯)',
+        'transport':'黑貓宅急便',
+        'thermo':'常溫',
+        'comment':'請安排2/2-2/3出貨，出貨後約1-3 個工作日到貨 婚期2026/1/31 出貨前，請先拍照給玟妤確認，謝謝',
+        'customer_no': '0032368',
+        'customer_id': '428609240200',
+        'address': '116台北市文山區羅斯福路五段273號2樓',
+        'recipient': '林月霜',
+        'mobile': '0933039896',
+        'fulfillment.address': '235450新北市中和區中正路1215號2樓',
+        'company': '巧櫻有限公司',
+        'fulfillment.phone':'0233652252'
+    }
+
+    create_shipping_label_code39('shipping_label_code39_TEST.pdf', sample_data)
+    return {"message": "Test ReportLab Print"}
 
 @app.get("/print-list/")
 async def check_printer_list():
