@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, './')
 from ctypes import alignment
 from turtle import left
 from reportlab.lib import styles
@@ -16,7 +18,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepInFrame
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.rl_config import defaultPageSize
-from barcode import BarcodeFlowable
+from renders.reportlab.barcode import BarcodeFlowable
 
 
 try:
