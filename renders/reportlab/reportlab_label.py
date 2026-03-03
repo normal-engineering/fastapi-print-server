@@ -204,6 +204,7 @@ def create_label(data):
         ('TOPPADDING', (0, -1), (-3, -1), -15),
         ('TOPPADDING', (-2, -1), (-1, -1), -8),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, -1), (-1, -1), 10),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('VALIGN', (0, -1), (0, -1), 'BOTTOM'),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
