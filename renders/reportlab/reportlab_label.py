@@ -78,7 +78,7 @@ def create_sticker(data):
         [table_custom(data=[
             [data.get('customer_no'), data.get('customer')],
             ['送貨日期:', data.get('date_shipping')], 
-            ['送貨時間:', f'{data.get('time_delivery_start')}~{data.get('time_delivery_start')}'], 
+            ['送貨時間:', f"{data.get('time_delivery_start')}~{data.get('time_delivery_start')}"], 
             ['收件人:', data.get('recipient')],
             ['電話:', data.get('mobile')],
             ['地址:', Paragraph(data.get('address'), style_normal)],
