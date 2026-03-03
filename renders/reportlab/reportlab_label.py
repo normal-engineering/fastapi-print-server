@@ -23,8 +23,8 @@ from renders.reportlab.barcode import BarcodeFlowable
 
 try:
     # Try to register Noto Sans CJK fonts (best option)
-    pdfmetrics.registerFont(TTFont('ChineseFont', 'shared/fonts/NotoSansTC-Regular.ttf'))
-    pdfmetrics.registerFont(TTFont('ChineseFont-Bold', 'shared/fonts/NotoSansTC-Bold.ttf'))
+    pdfmetrics.registerFont(TTFont('ChineseFont', 'fonts/NotoSansTC-Regular.ttf'))
+    pdfmetrics.registerFont(TTFont('ChineseFont-Bold', 'fonts/NotoSansTC-Bold.ttf'))
     CHINESE_FONT = 'ChineseFont'
     CHINESE_FONT_BOLD = 'ChineseFont-Bold'
     print("Noto Sans CJK fonts registered successfully")
