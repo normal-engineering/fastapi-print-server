@@ -1,6 +1,7 @@
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.12.1
+barcode==1.0.4
 boto3==1.42.30
 botocore==1.42.30
 certifi==2026.1.4
@@ -11,12 +12,17 @@ gunicorn==23.0.0
 h11==0.16.0
 idna==3.11
 jmespath==1.0.1
+Levenshtein==0.27.3
 packaging==25.0
+pillow==12.1.1
 pycups==2.0.4
 pydantic==2.12.5
 pydantic_core==2.41.5
 python-dateutil==2.9.0.post0
+python-Levenshtein==0.27.3
 python-multipart==0.0.21
+RapidFuzz==3.14.3
+reportlab==4.4.10
 requests==2.32.5
 s3transfer==0.16.0
 six==1.17.0
