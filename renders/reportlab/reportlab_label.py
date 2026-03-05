@@ -296,7 +296,7 @@ def create_label(data):
         
     ]
     
-    page_layout = Table(page_data, rowHeights=70*mm, splitByRow=5)
+    page_layout = Table(page_data, splitByRow=5)
 
     page_layout.setStyle(TableStyle([
         ('TOPPADDING', (0, 0), (-1, 0), -15),
@@ -316,8 +316,9 @@ def create_shipping_label_code39(output_path, data):
         topMargin=5*mm,
         bottomMargin=5*mm,
         leftMargin=5*mm,
-        rightMargin=20*mm
+        rightMargin=5*mm
     )
+
 
     story = []
     page_data = [
