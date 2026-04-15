@@ -18,10 +18,10 @@ from db.bucket import download_pdf_from_bucket
 
 app = FastAPI()
 
-# class PrintJob(BaseModel):
-#     file: UploadFile = None
-#     printer_name: str = "default_printer"
-#     copies: int = 1
+class PrintJob(BaseModel):
+    file: UploadFile = None
+    printer_name: str = "default_printer"
+    copies: int = 1
 
 type_dict = {
     'batch' : '明細表',
