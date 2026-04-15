@@ -1,0 +1,19 @@
+[Service]
+# The user your app runs under
+User=nuc
+Group=nuc
+
+# The working directory of your app
+WorkingDirectory=/home/nuc/fastapi-print-server
+
+# Use the full path to your virtual environment's uvicorn binary
+ExecStart=/home/nuc/fastapi-print-server/venv/bin/uvicorn main:app --host 127.0>
+Restart=always
+RestartSec=5
+
+# Log output to the systemd journal
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
