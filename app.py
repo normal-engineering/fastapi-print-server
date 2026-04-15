@@ -157,31 +157,32 @@ async def print_pdf_from_bucket(request:Request):
     print(body)
     ta_req = TypeAdapter(PrintBucketRequest)
     req = ta_req.validate_json(body)
-    
+    print(req)
+    return req
     # Save to temp directory
-    date = req['date_delivery'].strftime('%Y-%m')
+    # date = req['date_range'][0].strftime('%Y-%m')
+    # date = req['date_range'][0]
+    # type_converted = type_dict[req['type']]
+    # print(type_converted)
+    # temp_filename = f"{uuid.uuid4()}.pdf"
+    # bucket_filename = f"{date}/{type_converted}/{req['sub']}_{type_converted}.pdf"
+    # await download_pdf_from_bucket(s3_object_key=bucket_filename, local_file_path=temp_filename)
 
-    type_converted = type_dict[req['type']]
-    print(type_converted)
-    temp_filename = f"{uuid.uuid4()}.pdf"
-    bucket_filename = f"{date}/{type_converted}/{req['sub']}_{type_converted}.pdf"
-    await download_pdf_from_bucket(s3_object_key=bucket_filename, local_file_path=temp_filename)
+    # try:
+    #     with open(temp_filename, 'rb') as file:
+    #         file.read()
 
-    try:
-        with open(temp_filename, 'rb') as file:
-            file.read()
-
-            if req['device'] == 'MAIN':
-                result = print_file_with_cups(file, os.getenv('MAIN'))
-            else:
-                result = print_file_with_cups(file, printer_dict[req['device']])
+    #         if req['device'] == 'MAIN':
+    #             result = print_file_with_cups(file, os.getenv('MAIN'))
+    #         else:
+    #             result = print_file_with_cups(file, printer_dict[req['device']])
             
-            return result
+    #         return result
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Print failed: {str(e)}")
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=f"Print failed: {str(e)}")
 
-    finally:
-        # Cleanup
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
+    # finally:
+    #     # Cleanup
+    #     if os.path.exists(temp_filename):
+    #         os.remove(temp_filename)
