@@ -1,17 +1,25 @@
+[Unit]
+Description=FastAPI Print Server
+After=network-online.target cups.service
+Wants=network-online.target
+
 [Service]
-# The user your app runs under
+Type=simple
 User=nuc
 Group=nuc
-
-# The working directory of your app
 WorkingDirectory=/home/nuc/fastapi-print-server
+EnvironmentFile=/home/nuc/fastapi-print-server/.env
 
-# Use the full path to your virtual environment's uvicorn binary
-ExecStart=/home/nuc/fastapi-print-server/venv/bin/uvicorn main:app --host 127.0>
+# Keep worker count modest for small print-server hardware.
+ExecStart=/home/nuc/fastapi-print-server/venv/bin/gunicorn app:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --worker-tmp-dir /dev/shm
+
 Restart=always
-RestartSec=5
+RestartSec=3
+TimeoutStartSec=30
+TimeoutStopSec=30
+KillSignal=SIGTERM
+SyslogIdentifier=fastapi-print-server
 
-# Log output to the systemd journal
 StandardOutput=journal
 StandardError=journal
 
