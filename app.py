@@ -5,7 +5,9 @@ import cups
 import tempfile
 
 from pydantic import TypeAdapter
-from typing import Any, TypedDict, NotRequired
+from typing import Any, TypedDict
+from pydantic import BaseModel
+from typing_extensions import NotRequired
 import subprocess
 import os
 
