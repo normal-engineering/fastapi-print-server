@@ -5,7 +5,7 @@ import cups
 import tempfile
 
 from pydantic import TypeAdapter
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 import subprocess
 import os
 
@@ -46,8 +46,9 @@ phone_id = {
     "white-5": "3443422A-FD19-412C-AC18-0B1ADD40292B",
     }
 
+
 class PrintJob(TypedDict):
-    sub: str
+    sub: str 
     type: str
     date_delivery: datetime
     device_id: str
@@ -82,32 +83,32 @@ def print_file_with_cups(file_path: str, printer_name: str = None):
 async def test_connection():
     return {"message": "Print Server Online"}
 
-@app.get("/test-print")
-async def test_reportlab():
-    sample_data = {
-        'obtnumber': '907572734046',  # Code39 compatible value
-        'date_shipping': '2026-02-01',
-        'date_delivery': '2026-02-03',
-        'time_delivery_start': '14:00',
-        'time_delivery_end': '16:00',
-        'postnumber': '83-820-02-B',  # Code39 compatible value
-        'sub': 'O25003669002',
-        'customer': '林安琪(黃鼎喻/王奕雯)',
-        'transport':'黑貓宅急便',
-        'thermo':'常溫',
-        'comment':'請安排2/2-2/3出貨，出貨後約1-3 個工作日到貨 婚期2026/1/31 出貨前，請先拍照給玟妤確認，謝謝',
-        'customer_no': '0032368',
-        'customer_id': '428609240200',
-        'address': '116台北市文山區羅斯福路五段273號2樓',
-        'recipient': '林月霜',
-        'mobile': '0933039896',
-        'fulfillment.address': '235450新北市中和區中正路1215號2樓',
-        'company': '巧櫻有限公司',
-        'fulfillment.phone':'0233652252'
-    }
+# @app.get("/test-print")
+# async def test_reportlab():
+#     sample_data = {
+#         'obtnumber': '907572734046',  # Code39 compatible value
+#         'date_shipping': '2026-02-01',
+#         'date_delivery': '2026-02-03',
+#         'time_delivery_start': '14:00',
+#         'time_delivery_end': '16:00',
+#         'postnumber': '83-820-02-B',  # Code39 compatible value
+#         'sub': 'O25003669002',
+#         'customer': '林安琪(黃鼎喻/王奕雯)',
+#         'transport':'黑貓宅急便',
+#         'thermo':'常溫',
+#         'comment':'請安排2/2-2/3出貨，出貨後約1-3 個工作日到貨 婚期2026/1/31 出貨前，請先拍照給玟妤確認，謝謝',
+#         'customer_no': '0032368',
+#         'customer_id': '428609240200',
+#         'address': '116台北市文山區羅斯福路五段273號2樓',
+#         'recipient': '林月霜',
+#         'mobile': '0933039896',
+#         'fulfillment.address': '235450新北市中和區中正路1215號2樓',
+#         'company': '巧櫻有限公司',
+#         'fulfillment.phone':'0233652252'
+#     }
 
-    create_shipping_label_code39('shipping_label_code39_TEST.pdf', sample_data)
-    return {"message": "Test ReportLab Print"}
+#     create_shipping_label_code39('shipping_label_code39_TEST.pdf', sample_data)
+#     return {"message": "Test ReportLab Print"}
 
 @app.get("/print-list/")
 async def check_printer_list():
@@ -143,16 +144,23 @@ async def print_pdf(
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
 
-@app.post("/print-bucket/")
+
+class PrintBucketRequest(TypedDict):
+    sub: NotRequired[str] = None
+    date_range: NotRequired[str] = None
+    document: NotRequired[str] = None
+    device: NotRequired[str] = None
+
+@app.post("/bucket/")
 async def print_pdf_from_bucket(request:Request):
     body = await request.body()
     print(body)
-    ta_req = TypeAdapter(PrintJob)
+    ta_req = TypeAdapter(PrintBucketRequest)
     req = ta_req.validate_json(body)
+    
     # Save to temp directory
-
     date = req['date_delivery'].strftime('%Y-%m')
-    # date = '2026-01'
+
     type_converted = type_dict[req['type']]
     print(type_converted)
     temp_filename = f"{uuid.uuid4()}.pdf"
@@ -162,7 +170,12 @@ async def print_pdf_from_bucket(request:Request):
     try:
         with open(temp_filename, 'rb') as file:
             file.read()
-            result = print_file_with_cups(file, req['printer'])
+
+            if req['device'] == 'MAIN':
+                result = print_file_with_cups(file, os.getenv('MAIN'))
+            else:
+                result = print_file_with_cups(file, printer_dict[req['device']])
+            
             return result
 
     except Exception as e:
@@ -172,19 +185,3 @@ async def print_pdf_from_bucket(request:Request):
         # Cleanup
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
-
-@app.post("/main/")
-async def print_on_main(request:Request):
-    body = await request.body()
-    print(body)
-    ta_req = TypeAdapter(PrintJob)
-    req = ta_req.validate_json(body)
-    return {"message": "Main"}  
-
-@app.post("/brothers/")
-async def print_on_brothers(request:Request):
-    body = await request.body()
-    print(body)
-    ta_req = TypeAdapter(PrintJob)
-    req = ta_req.validate_json(body)
-    return {"message": "Brothers"}  

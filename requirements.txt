@@ -15,6 +15,7 @@ jmespath==1.0.1
 Levenshtein==0.27.3
 packaging==25.0
 pillow==12.1.1
+py-dotenv==0.1
 pycups==2.0.4
 pydantic==2.12.5
 pydantic_core==2.41.5
