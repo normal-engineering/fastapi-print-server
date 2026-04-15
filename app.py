@@ -172,3 +172,19 @@ async def print_pdf_from_bucket(request:Request):
         # Cleanup
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
+
+@app.post("/main/")
+async def print_on_main(request:Request):
+    body = await request.body()
+    print(body)
+    ta_req = TypeAdapter(PrintJob)
+    req = ta_req.validate_json(body)
+    return {"message": "Main"}  
+
+@app.post("/brothers/")
+async def print_on_brothers(request:Request):
+    body = await request.body()
+    print(body)
+    ta_req = TypeAdapter(PrintJob)
+    req = ta_req.validate_json(body)
+    return {"message": "Brothers"}  
